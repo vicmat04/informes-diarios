@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard | Generador de Informe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="logo">
+        <span style="font-size: 1.5rem; margin-right: 4px;">🪓</span>
+        <span>Guerreros</span>
+      </div>
+      
+      <ul class="nav-menu" style="flex: 1;">
+        <li class="nav-item active" id="navInicio">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Inicio</span>
+        </li>
+      </ul>
+
+      <div class="facilitators-sidebar-box" style="margin-top: 24px;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 12px; letter-spacing: 0.1em;">Facilitadores</div>
+        <div id="facilitatorAvatars" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+           <!-- JS Injects avatars here -->
+        </div>
+      </div>
+
+      <div>
+        <button id="themeToggle" class="btn btn-outline" style="width: 100%; justify-content: center;">☀️ Modo Claro</button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- INICIO VIEW -->
+      <div id="viewInicio" class="app-view">
+        <header class="header-top">
+          <div class="facilitator-box">
+            <div class="input-group">
+              <label>Facilitador</label>
+              <input id="facilitatorSelect" type="text" readonly style="font-weight: bold; color: var(--primary); background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); cursor: default;">
+            </div>
+            <div class="input-group">
+              <label>Hora de Salida</label>
+              <input id="exitTime" type="text" value="5:00 p.m." style="width: 110px; font-weight: bold;">
+            </div>
+            <div class="input-group">
+              <label>Fecha del Informe</label>
+              <div class="flex-row">
+                <input id="reportDate" type="date">
+                <button class="btn btn-outline btn-sm" id="yesterdayButton">Ayer</button>
+                <button class="btn btn-primary btn-sm" id="todayButton" style="box-shadow: none;">Hoy</button>
+              </div>
+            </div>
+          </div>
+          
+          <div id="status" class="status-pill">Sistema listo.</div>
+        </header>
+
+        <div class="dashboard-grid" style="margin-top: 32px;">
+          <!-- Editor Section -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Panel de Registro</h2>
+            </div>
+
+            <!-- Catálogo de Actividades -->
+            <div class="section-box">
+              <div class="section-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                Catálogo de Actividades
+              </div>
+              
+              <div id="activityButtons" class="activities-grid" style="margin-bottom: 20px;">
+                <!-- JS Injects cards here -->
+              </div>
+
+              <div class="flex-col" style="border-top: 1px dashed var(--border); padding-top: 16px;">
+                <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">Agregar Nueva Actividad al Catálogo</label>
+                <input id="newActivityTitle" type="text" placeholder="Título corto (ej. Revisión de correos)...">
+                <textarea id="newActivityDetail" placeholder="Detalle completo de la actividad..." style="height: 60px; resize: vertical;"></textarea>
+                <button id="saveActivity" class="btn btn-primary btn-sm" style="align-self: flex-start;">+ Guardar Nueva Actividad</button>
+              </div>
+            </div>
+
+            <!-- Talleres -->
+            <div class="section-box">
+              <div class="section-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                Desarrollo de Talleres
+              </div>
+              <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                <input id="workshopName" type="text" placeholder="Nombre específico del taller" style="flex: 1;">
+                <select id="workshopTheme" style="flex: 1;"></select>
+                <button id="manageTopicsBtn" class="btn btn-outline btn-sm" title="Gestionar temas">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </button>
+              </div>
+              <button id="addWorkshopItem" class="btn btn-outline btn-sm" style="margin-bottom: 20px;">Añadir Desarrollo de Taller</button>
+            </div>
+
+            <!-- Entrada Manual -->
+            <div class="section-box">
+              <div class="section-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Entrada Manual
+              </div>
+              <div class="flex-col">
+                <textarea id="customItem" placeholder="Escribir actividad específica..." style="height: 60px; resize: vertical;"></textarea>
+                <button id="addCustomItem" class="btn btn-outline btn-sm" style="align-self: flex-start;">Añadir Manual</button>
+              </div>
+            </div>
+            
+            <!-- Actividades Seleccionadas -->
+            <div class="section-box" style="border-color: var(--primary);">
+               <div class="section-title">
+                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                 Actividades Seleccionadas para el Informe
+               </div>
+               <div id="reportList" style="display: flex; flex-direction: column; gap: 10px; min-height: 100px;">
+                 <!-- JS Injects list here -->
+               </div>
+               <button id="clearReport" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 20px; border-color: var(--accent-1); color: var(--accent-1);">Limpiar Todas las Actividades</button>
+            </div>
+
+            <!-- Anexos Fotográficos -->
+            <div class="section-box">
+              <div class="section-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                Anexos Fotográficos
+              </div>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Selecciona imágenes (JPG o PNG) para incluirlas al final de tu informe.</p>
+              
+              <div class="flex-row" style="margin-bottom: 16px;">
+                <input type="file" id="imageUploadInput" accept="image/png, image/jpeg, image/jpg" multiple style="display: none;">
+                <button id="triggerImageUploadBtn" class="btn btn-outline btn-sm">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Seleccionar Imágenes
+                </button>
+              </div>
+
+              <div id="imageThumbnails" style="display: flex; gap: 12px; flex-wrap: wrap; min-height: 20px;">
+                <!-- JS Injects thumbnails here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- La vista previa ahora está en un modal -->
+        </div>
+      </div>
+      <!-- MODAL PARA ACTIVIDADES -->
+      <div id="activityModal" class="modal-overlay hidden">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3 id="modalTitleLabel" class="card-title">Detalle de Actividad</h3>
+            <button id="closeModalIcon" class="mini-btn" style="background: transparent; color: var(--text-muted); font-size: 1.2rem; width: 32px; height: 32px;">✕</button>
+          </div>
+          <div class="modal-body flex-col" style="margin-top: 24px;">
+            <div class="input-group">
+              <label>Título</label>
+              <input type="text" id="modalInputTitle" readonly>
+            </div>
+            <div class="input-group">
+              <label>Detalle Completo</label>
+              <textarea id="modalInputDetail" style="height: 140px; resize: vertical;" readonly></textarea>
+            </div>
+          </div>
+          <div class="modal-footer flex-row" style="justify-content: flex-end; margin-top: 32px;">
+            <button id="modalCancelBtn" class="btn btn-outline">Cerrar</button>
+            <button id="modalSaveBtn" class="btn btn-primary" style="display: none;">Guardar Cambios</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL PARA GESTIONAR TEMAS -->
+      <div id="topicsModal" class="modal-overlay hidden">
+        <div class="modal-card" style="max-height: 80vh; display: flex; flex-direction: column;">
+          <div class="modal-header">
+            <h3 class="card-title">Gestionar Temas de Capacitación</h3>
+            <button id="closeTopicsIcon" class="mini-btn" style="background: transparent; color: var(--text-muted); font-size: 1.2rem; width: 32px; height: 32px;">✕</button>
+          </div>
+          <div class="modal-body flex-col" style="margin-top: 24px; flex: 1; overflow-y: auto;">
+            <div class="flex-row" style="margin-bottom: 16px;">
+              <input id="topicModalInput" type="text" placeholder="Nuevo tema..." style="flex: 1;">
+              <button id="addTopicModalBtn" class="btn btn-primary btn-sm">Añadir</button>
+            </div>
+            <ul id="topicsList" style="list-style: none; display: flex; flex-direction: column; gap: 8px;">
+              <!-- JS Injects topics here -->
+            </ul>
+          </div>
+          <div class="modal-footer flex-row" style="justify-content: flex-end; margin-top: 32px; border-top: 1px solid var(--border); padding-top: 16px;">
+            <button id="closeTopicsBtn" class="btn btn-outline">Cerrar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL DE VISTA PREVIA -->
+      <div id="previewModal" class="modal-overlay hidden">
+        <div class="modal-card preview-modal-card">
+          <div class="modal-header">
+            <h3 class="card-title">Vista Previa del Informe</h3>
+            <div class="flex-row">
+              <button id="copyReport" class="btn btn-outline btn-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copiar
+              </button>
+              <button id="closePreviewIcon" class="mini-btn" style="background: transparent; color: var(--text-muted); font-size: 1.2rem; width: 32px; height: 32px;">✕</button>
+            </div>
+          </div>
+          
+          <div class="modal-body" style="margin-top: 24px; max-height: 60vh; overflow-y: auto;">
+            <div id="preview" class="paper">
+              <!-- JS Injects preview here -->
+            </div>
+          </div>
+          
+          <div class="modal-footer" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 12px;">
+              <button id="downloadTxt" class="btn btn-outline">TXT</button>
+              <button id="downloadDoc" class="btn btn-outline" style="border-color: #2b5797; color: #2b5797;">WORD</button>
+              <button id="downloadPdf" class="btn btn-primary" style="background: linear-gradient(135deg, #e11d48, #be123c);">PDF</button>
+            </div>
+            <div style="text-align: right; margin-top: 16px;">
+              <button id="closePreviewBtn" class="btn btn-outline" style="width: 100%;">Cerrar Vista Previa</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTON FLOTANTE (FAB) -->
+      <button id="fabPreview" class="fab-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Ver Informe
+      </button>
+
+    </main>
+  </div>
+
+  <script>const initialState = {{ initial_state|tojson }};</script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
