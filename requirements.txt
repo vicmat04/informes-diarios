@@ -2,3 +2,4 @@ flask
 gunicorn
 fpdf2
 python-docx
+lxml

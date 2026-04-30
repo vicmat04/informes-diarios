@@ -117,13 +117,13 @@ def build_report_lines(report_date: str, report_items: list[str], facilitator: s
 def build_doc_bytes(report_date: str, report_items: list[str], facilitator: str, exit_time: str, images: list[str] = None) -> bytes:
     doc = Document()
     
-    logo_path = "logo.png" if os.path.exists("logo.png") else ("logo.jpg" if os.path.exists("logo.jpg") else None)
+    logo_path = APP_DIR / "logo.png" if (APP_DIR / "logo.png").exists() else (APP_DIR / "logo.jpg" if (APP_DIR / "logo.jpg").exists() else None)
     if logo_path:
         try:
             p = doc.add_paragraph()
             p.alignment = 2 # Right align (0=Left, 1=Center, 2=Right)
             r = p.add_run()
-            r.add_picture(logo_path, width=Inches(1.5))
+            r.add_picture(str(logo_path), width=Inches(1.5))
         except Exception as e:
             print("Error adding logo to docx:", e)
 
@@ -151,11 +151,11 @@ def build_pdf_bytes(report_date: str, report_items: list[str], facilitator: str,
     pdf.set_margins(left=20, top=20, right=20)
     pdf.add_page()
     
-    logo_path = "logo.png" if os.path.exists("logo.png") else ("logo.jpg" if os.path.exists("logo.jpg") else None)
+    logo_path = APP_DIR / "logo.png" if (APP_DIR / "logo.png").exists() else (APP_DIR / "logo.jpg" if (APP_DIR / "logo.jpg").exists() else None)
     if logo_path:
         try:
             # Place in the top left corner (x=15, y=15), width 40mm
-            pdf.image(logo_path, x=15, y=15, w=40)
+            pdf.image(str(logo_path), x=15, y=15, w=40)
         except Exception as e:
             print("Error adding logo to pdf:", e)
     
@@ -201,7 +201,7 @@ def build_pdf_bytes(report_date: str, report_items: list[str], facilitator: str,
     return bytes(pdf.output())
 
 def create_app() -> Flask:
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder='templates', static_folder='static')
 
     @app.get("/")
     def index():
