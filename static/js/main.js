@@ -446,12 +446,27 @@ function addCustomItem() {
     elements.customItem.value = "";
 }
 
+function getInitials(name) {
+    const clean = name.replace(/Licdo\.\s*|Licda\.\s*/gi, "").trim();
+    const parts = clean.split(/\s+/);
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    } else if (parts.length === 1) {
+        return parts[0][0].toUpperCase();
+    }
+    return "ID";
+}
+
 function downloadTxt() {
+    const initials = getInitials(state.facilitator);
+    const prettyDate = formatDisplayDate(state.reportDate);
+    const filename = `Informe Diario - ${initials} - ${prettyDate}.txt`;
+
     const blob = new Blob([buildReportText()], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `informe_${state.reportDate}.txt`;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
