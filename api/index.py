@@ -212,10 +212,10 @@ def index():
     # Mapa de avatares hardcodeado para Vercel
     # Esto asegura que las imágenes se carguen correctamente sin depender del escaneo del sistema de archivos
     avatar_map = {
-        "juan quiel": "Juan Quiel.jpeg",
-        "carlos batista": "Carlos Batista.png",
-        "fernando barria": "Fernando Barria.png",
-        "victor dominguez": "Victor Dominguez.jpeg"
+        "juan quiel": "juan_quiel.jpeg",
+        "carlos batista": "carlos_batista.png",
+        "fernando barria": "fernando_barria.png",
+        "victor dominguez": "victor_dominguez.jpeg"
     }
 
     initial_state = {
