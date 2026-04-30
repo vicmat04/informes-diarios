@@ -14,7 +14,6 @@ from docx import Document
 from docx.shared import Inches
 
 # Configuración de rutas para Vercel
-# APP_DIR es 'api/'
 APP_DIR = Path(__file__).resolve().parent
 ROOT_DIR = APP_DIR.parent
 DATA_FILE = ROOT_DIR / "actividades.json"
@@ -57,6 +56,25 @@ REPORT_HEADER_LINES_TEMPLATE = [
     "***Facilitador Interno***",
 ]
 
+MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+
+def get_initials(name: str) -> str:
+    # Quitar títulos y espacios
+    clean_name = name.replace("Licdo.", "").replace("Licda.", "").strip()
+    parts = clean_name.split()
+    if len(parts) >= 2:
+        return (parts[0][0] + parts[-1][0]).upper()
+    elif len(parts) == 1:
+        return parts[0][0].upper()
+    return "ID"
+
+def format_date_spanish(iso_date: str) -> str:
+    try:
+        dt = datetime.strptime(iso_date, "%Y-%m-%d")
+        return f"{dt.day} de {MESES[dt.month-1]} {dt.year}"
+    except:
+        return iso_date
+
 def load_data() -> tuple[list[dict], list[str]]:
     if not DATA_FILE.exists():
         return DEFAULT_ACTIVITIES.copy(), DEFAULT_WORKSHOP_TOPICS.copy()
@@ -88,12 +106,6 @@ def save_data(activities: list[dict], workshop_topics: list[str]) -> None:
     except:
         pass
 
-def format_display_date(iso_date: str) -> str:
-    try:
-        return datetime.strptime(iso_date, "%Y-%m-%d").strftime("%d/%m/%Y")
-    except ValueError:
-        return iso_date
-
 def build_report_lines(report_date: str, report_items: list[str], facilitator: str = "Licdo. Juan Quiel", exit_time: str = "5:00 p.m.") -> list[str]:
     regional = FACILITATOR_REGIONAL_MAP.get(facilitator, "Regional de Panamá")
     lines = []
@@ -105,7 +117,8 @@ def build_report_lines(report_date: str, report_items: list[str], facilitator: s
         else:
             lines.append(line)
             
-    lines.append(f"Fecha: {format_display_date(report_date)}")
+    # Usar el nuevo formato de fecha en español dentro del documento
+    lines.append(f"Fecha: {format_date_spanish(report_date)}")
     lines.append("")
     lines.append("Actividades realizadas:")
     
@@ -209,8 +222,6 @@ def build_pdf_bytes(report_date: str, report_items: list[str], facilitator: str,
 def index():
     activities, workshop_topics = load_data()
     
-    # Mapa de avatares hardcodeado para Vercel
-    # Esto asegura que las imágenes se carguen correctamente sin depender del escaneo del sistema de archivos
     avatar_map = {
         "juan quiel": "juan_quiel.jpeg",
         "carlos batista": "carlos_batista.png",
@@ -250,15 +261,20 @@ def export_report(doc_type):
     exit_time = data.get('exit_time', "5:00 p.m.")
     images = data.get('images', [])
 
+    # Preparar el nombre sugerido del archivo
+    initials = get_initials(facilitator)
+    fecha_bonita = format_date_spanish(report_date)
+    filename = f"Informe Diario - {initials} - {fecha_bonita}"
+
     try:
         if doc_type == 'doc':
             out_bytes = build_doc_bytes(report_date, report_items, facilitator, exit_time, images)
             return Response(out_bytes, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
-                            headers={"Content-Disposition": f"attachment; filename=informe_{report_date}.docx"})
+                            headers={"Content-Disposition": f"attachment; filename={filename}.docx"})
         elif doc_type == 'pdf':
             out_bytes = build_pdf_bytes(report_date, report_items, facilitator, exit_time, images)
             return Response(out_bytes, mimetype='application/pdf', 
-                            headers={"Content-Disposition": f"attachment; filename=informe_{report_date}.pdf"})
+                            headers={"Content-Disposition": f"attachment; filename={filename}.pdf"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     return jsonify({"error": "Invalid format"}), 400
