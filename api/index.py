@@ -13,9 +13,13 @@ from fpdf import FPDF
 from docx import Document
 from docx.shared import Inches
 
-# Configuración de rutas
+# Configuración de rutas para Vercel
+# APP_DIR es 'api/'
 APP_DIR = Path(__file__).resolve().parent
-DATA_FILE = APP_DIR / "actividades.json"
+ROOT_DIR = APP_DIR.parent
+DATA_FILE = ROOT_DIR / "actividades.json"
+
+app = Flask(__name__, template_folder='../templates', static_folder='../static')
 
 DEFAULT_ACTIVITIES = [
     {"title": "Revisión de correos", "detail": "Revisión de correos y mensajes de WhatsApp de dinamizadores y personal de infoplaza."},
@@ -79,7 +83,11 @@ def load_data() -> tuple[list[dict], list[str]]:
 
 def save_data(activities: list[dict], workshop_topics: list[str]) -> None:
     payload = {"activities": activities, "workshop_topics": workshop_topics}
-    DATA_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    # En Vercel esto fallará silenciosamente o dará error, pero lo mantenemos para local
+    try:
+        DATA_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    except:
+        pass
 
 def format_display_date(iso_date: str) -> str:
     try:
@@ -117,11 +125,11 @@ def build_report_lines(report_date: str, report_items: list[str], facilitator: s
 def build_doc_bytes(report_date: str, report_items: list[str], facilitator: str, exit_time: str, images: list[str] = None) -> bytes:
     doc = Document()
     
-    logo_path = APP_DIR / "logo.png" if (APP_DIR / "logo.png").exists() else (APP_DIR / "logo.jpg" if (APP_DIR / "logo.jpg").exists() else None)
+    logo_path = ROOT_DIR / "logo.png" if (ROOT_DIR / "logo.png").exists() else (ROOT_DIR / "logo.jpg" if (ROOT_DIR / "logo.jpg").exists() else None)
     if logo_path:
         try:
             p = doc.add_paragraph()
-            p.alignment = 2 # Right align (0=Left, 1=Center, 2=Right)
+            p.alignment = 2 # Right align
             r = p.add_run()
             r.add_picture(str(logo_path), width=Inches(1.5))
         except Exception as e:
@@ -151,10 +159,9 @@ def build_pdf_bytes(report_date: str, report_items: list[str], facilitator: str,
     pdf.set_margins(left=20, top=20, right=20)
     pdf.add_page()
     
-    logo_path = APP_DIR / "logo.png" if (APP_DIR / "logo.png").exists() else (APP_DIR / "logo.jpg" if (APP_DIR / "logo.jpg").exists() else None)
+    logo_path = ROOT_DIR / "logo.png" if (ROOT_DIR / "logo.png").exists() else (ROOT_DIR / "logo.jpg" if (ROOT_DIR / "logo.jpg").exists() else None)
     if logo_path:
         try:
-            # Place in the top left corner (x=15, y=15), width 40mm
             pdf.image(str(logo_path), x=15, y=15, w=40)
         except Exception as e:
             print("Error adding logo to pdf:", e)
@@ -164,7 +171,6 @@ def build_pdf_bytes(report_date: str, report_items: list[str], facilitator: str,
             pdf.ln(5)
             continue
             
-        # Normalize common unicode characters to latin-1 equivalents
         safe_line = line.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'").replace("–", "-").replace("—", "-").replace("\u200b", "")
         safe_line = safe_line.encode('latin-1', 'replace').decode('latin-1')
         
@@ -200,68 +206,62 @@ def build_pdf_bytes(report_date: str, report_items: list[str], facilitator: str,
         
     return bytes(pdf.output())
 
-def create_app() -> Flask:
-    app = Flask(__name__, template_folder='templates', static_folder='static')
+@app.get("/")
+def index():
+    activities, workshop_topics = load_data()
+    
+    avatar_map = {}
+    avatar_dir = ROOT_DIR / "static" / "avatars"
+    if avatar_dir.exists():
+        for file in avatar_dir.iterdir():
+            if file.is_file() and file.suffix.lower() in [".jpg", ".jpeg", ".png"]:
+                normalized_stem = unicodedata.normalize('NFKD', file.stem).encode('ASCII', 'ignore').decode('utf-8').lower()
+                avatar_map[normalized_stem] = file.name
 
-    @app.get("/")
-    def index():
-        activities, workshop_topics = load_data()
-        
-        avatar_map = {}
-        avatar_dir = APP_DIR / "static" / "avatars"
-        if avatar_dir.exists():
-            for file in avatar_dir.iterdir():
-                if file.is_file() and file.suffix.lower() in [".jpg", ".jpeg", ".png"]:
-                    # Normalize: remove accents and lowercase
-                    normalized_stem = unicodedata.normalize('NFKD', file.stem).encode('ASCII', 'ignore').decode('utf-8').lower()
-                    avatar_map[normalized_stem] = file.name
+    initial_state = {
+        "today": date.today().isoformat(),
+        "activities": activities,
+        "workshopTopics": workshop_topics,
+        "facilitators": FACILITATORS,
+        "regionalMap": FACILITATOR_REGIONAL_MAP,
+        "avatarMap": avatar_map,
+    }
+    return render_template("index.html", initial_state=initial_state)
 
-        initial_state = {
-            "today": date.today().isoformat(),
-            "activities": activities,
-            "workshopTopics": workshop_topics,
-            "facilitators": FACILITATORS,
-            "regionalMap": FACILITATOR_REGIONAL_MAP,
-            "avatarMap": avatar_map,
-        }
-        return render_template("index.html", initial_state=initial_state)
+@app.get("/api/data")
+def get_data():
+    activities, workshop_topics = load_data()
+    return jsonify({"activities": activities, "workshop_topics": workshop_topics})
 
-    @app.get("/api/data")
-    def get_data():
-        activities, workshop_topics = load_data()
-        return jsonify({"activities": activities, "workshop_topics": workshop_topics})
+@app.post("/api/data")
+def update_data():
+    payload = request.get_json(silent=True) or {}
+    activities = payload.get("activities", [])
+    workshop_topics = payload.get("workshop_topics", [])
+    save_data(activities, workshop_topics)
+    return jsonify({"ok": True})
 
-    @app.post("/api/data")
-    def update_data():
-        payload = request.get_json(silent=True) or {}
-        activities = payload.get("activities", [])
-        workshop_topics = payload.get("workshop_topics", [])
-        save_data(activities, workshop_topics)
-        return jsonify({"ok": True})
+@app.post("/api/export/<doc_type>")
+def export_report(doc_type):
+    data = request.json
+    report_date = data.get('report_date', date.today().isoformat())
+    report_items = data.get('report_items', [])
+    facilitator = data.get('facilitator', "Licdo. Juan Quiel")
+    exit_time = data.get('exit_time', "5:00 p.m.")
+    images = data.get('images', [])
 
-    @app.post("/api/export/<doc_type>")
-    def export_report(doc_type):
-        data = request.json
-        report_date = data.get('report_date', date.today().isoformat())
-        report_items = data.get('report_items', [])
-        facilitator = data.get('facilitator', "Licdo. Juan Quiel")
-        exit_time = data.get('exit_time', "5:00 p.m.")
-        images = data.get('images', [])
-
-        try:
-            if doc_type == 'doc':
-                out_bytes = build_doc_bytes(report_date, report_items, facilitator, exit_time, images)
-                return Response(out_bytes, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
-                                headers={"Content-Disposition": f"attachment; filename=informe_{report_date}.docx"})
-            elif doc_type == 'pdf':
-                out_bytes = build_pdf_bytes(report_date, report_items, facilitator, exit_time, images)
-                return Response(out_bytes, mimetype='application/pdf', 
-                                headers={"Content-Disposition": f"attachment; filename=informe_{report_date}.pdf"})
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-        return jsonify({"error": "Invalid format"}), 400
-
-app = create_app()
+    try:
+        if doc_type == 'doc':
+            out_bytes = build_doc_bytes(report_date, report_items, facilitator, exit_time, images)
+            return Response(out_bytes, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+                            headers={"Content-Disposition": f"attachment; filename=informe_{report_date}.docx"})
+        elif doc_type == 'pdf':
+            out_bytes = build_pdf_bytes(report_date, report_items, facilitator, exit_time, images)
+            return Response(out_bytes, mimetype='application/pdf', 
+                            headers={"Content-Disposition": f"attachment; filename=informe_{report_date}.pdf"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"error": "Invalid format"}), 400
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
