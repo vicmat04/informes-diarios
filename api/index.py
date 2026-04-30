@@ -83,7 +83,6 @@ def load_data() -> tuple[list[dict], list[str]]:
 
 def save_data(activities: list[dict], workshop_topics: list[str]) -> None:
     payload = {"activities": activities, "workshop_topics": workshop_topics}
-    # En Vercel esto fallará silenciosamente o dará error, pero lo mantenemos para local
     try:
         DATA_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     except:
@@ -129,7 +128,7 @@ def build_doc_bytes(report_date: str, report_items: list[str], facilitator: str,
     if logo_path:
         try:
             p = doc.add_paragraph()
-            p.alignment = 2 # Right align
+            p.alignment = 2
             r = p.add_run()
             r.add_picture(str(logo_path), width=Inches(1.5))
         except Exception as e:
@@ -210,13 +209,14 @@ def build_pdf_bytes(report_date: str, report_items: list[str], facilitator: str,
 def index():
     activities, workshop_topics = load_data()
     
-    avatar_map = {}
-    avatar_dir = ROOT_DIR / "static" / "avatars"
-    if avatar_dir.exists():
-        for file in avatar_dir.iterdir():
-            if file.is_file() and file.suffix.lower() in [".jpg", ".jpeg", ".png"]:
-                normalized_stem = unicodedata.normalize('NFKD', file.stem).encode('ASCII', 'ignore').decode('utf-8').lower()
-                avatar_map[normalized_stem] = file.name
+    # Mapa de avatares hardcodeado para Vercel
+    # Esto asegura que las imágenes se carguen correctamente sin depender del escaneo del sistema de archivos
+    avatar_map = {
+        "juan quiel": "Juan Quiel.jpeg",
+        "carlos batista": "Carlos Batista.png",
+        "fernando barria": "Fernando Barria.png",
+        "victor dominguez": "Victor Dominguez.jpeg"
+    }
 
     initial_state = {
         "today": date.today().isoformat(),
