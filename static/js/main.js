@@ -536,7 +536,7 @@ async function downloadBinary(kind) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `informe_${state.reportDate}.${kind === "pdf" ? "pdf" : "doc"}`;
+        // Se elimina link.download para que el navegador use el nombre enviado por el servidor (con iniciales y fecha larga)
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
