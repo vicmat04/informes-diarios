@@ -558,6 +558,11 @@ function switchView(viewId) {
 function bindEvents() {
     document.getElementById("navInicio").addEventListener("click", () => switchView("viewInicio"));
 
+    elements.reportDate.addEventListener("change", () => {
+        state.reportDate = elements.reportDate.value;
+        refreshPreview();
+    });
+
     elements.exitTime.addEventListener("input", () => {
         state.exitTime = elements.exitTime.value;
         refreshPreview();
