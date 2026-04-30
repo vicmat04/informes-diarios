@@ -59,10 +59,11 @@ REPORT_HEADER_LINES_TEMPLATE = [
 MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
 
 def get_initials(name: str) -> str:
-    # Quitar títulos y espacios
+    # Quitar títulos ("Licdo.", "Licda.") y cualquier espacio extra
     clean_name = name.replace("Licdo.", "").replace("Licda.", "").strip()
     parts = clean_name.split()
     if len(parts) >= 2:
+        # Primera letra del nombre y primera letra del último apellido
         return (parts[0][0] + parts[-1][0]).upper()
     elif len(parts) == 1:
         return parts[0][0].upper()
@@ -117,7 +118,6 @@ def build_report_lines(report_date: str, report_items: list[str], facilitator: s
         else:
             lines.append(line)
             
-    # Usar el nuevo formato de fecha en español dentro del documento
     lines.append(f"Fecha: {format_date_spanish(report_date)}")
     lines.append("")
     lines.append("Actividades realizadas:")
@@ -261,7 +261,7 @@ def export_report(doc_type):
     exit_time = data.get('exit_time', "5:00 p.m.")
     images = data.get('images', [])
 
-    # Preparar el nombre sugerido del archivo
+    # Preparar el nombre sugerido del archivo (entre comillas para evitar truncamiento por espacios)
     initials = get_initials(facilitator)
     fecha_bonita = format_date_spanish(report_date)
     filename = f"Informe Diario - {initials} - {fecha_bonita}"
@@ -270,11 +270,11 @@ def export_report(doc_type):
         if doc_type == 'doc':
             out_bytes = build_doc_bytes(report_date, report_items, facilitator, exit_time, images)
             return Response(out_bytes, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
-                            headers={"Content-Disposition": f"attachment; filename={filename}.docx"})
+                            headers={"Content-Disposition": f'attachment; filename="{filename}.docx"'})
         elif doc_type == 'pdf':
             out_bytes = build_pdf_bytes(report_date, report_items, facilitator, exit_time, images)
             return Response(out_bytes, mimetype='application/pdf', 
-                            headers={"Content-Disposition": f"attachment; filename={filename}.pdf"})
+                            headers={"Content-Disposition": f'attachment; filename="{filename}.pdf"'})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     return jsonify({"error": "Invalid format"}), 400
