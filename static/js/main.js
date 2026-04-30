@@ -52,10 +52,12 @@ function setStatus(message) {
     elements.status.textContent = message;
 }
 
+const MESES_JS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
 function formatDisplayDate(isoDate) {
     if (!isoDate) return "N/A";
     const [year, month, day] = isoDate.split("-");
-    return `${day}/${month}/${year}`;
+    return `${parseInt(day)} de ${MESES_JS[parseInt(month) - 1]} ${year}`;
 }
 
 function getRegional() {
