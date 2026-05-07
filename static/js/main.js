@@ -459,8 +459,9 @@ function getInitials(name) {
 
 function downloadTxt() {
     const initials = getInitials(state.facilitator);
-    const prettyDate = formatDisplayDate(state.reportDate);
-    const filename = `Informe Diario - ${initials} - ${prettyDate}.txt`;
+    const [year, month, day] = state.reportDate.split("-");
+    const fechaArchivo = `${parseInt(day)} de ${MESES_JS[parseInt(month) - 1]}`;
+    const filename = `Informe Diario - ${initials} - ${fechaArchivo}.txt`;
 
     const blob = new Blob([buildReportText()], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -536,7 +537,14 @@ async function downloadBinary(kind) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        // Se elimina link.download para que el navegador use el nombre enviado por el servidor (con iniciales y fecha larga)
+        
+        // Reconstrucción del nombre de archivo para forzar la descarga con el formato solicitado
+        const initials = getInitials(state.facilitator);
+        const [year, month, day] = state.reportDate.split("-");
+        const fechaArchivo = `${parseInt(day)} de ${MESES_JS[parseInt(month) - 1]}`;
+        const extension = kind === "doc" ? "docx" : "pdf";
+        link.download = `Informe Diario - ${initials} - ${fechaArchivo}.${extension}`;
+        
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

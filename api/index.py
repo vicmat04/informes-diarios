@@ -261,10 +261,11 @@ def export_report(doc_type):
     exit_time = data.get('exit_time', "5:00 p.m.")
     images = data.get('images', [])
 
-    # Preparar el nombre sugerido del archivo (entre comillas para evitar truncamiento por espacios)
+    # Preparar el nombre sugerido del archivo según pedido del usuario (Iniciales + Fecha sin año)
     initials = get_initials(facilitator)
-    fecha_bonita = format_date_spanish(report_date)
-    filename = f"Informe Diario - {initials} - {fecha_bonita}"
+    dt = datetime.strptime(report_date, "%Y-%m-%d")
+    fecha_archivo = f"{dt.day} de {MESES[dt.month-1]}"
+    filename = f"Informe Diario - {initials} - {fecha_archivo}"
 
     try:
         if doc_type == 'doc':
