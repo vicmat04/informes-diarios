@@ -318,11 +318,16 @@ async function saveCatalog() {
 }
 
 function addReportItem(item) {
-    state.reportItems.push(item);
+    if (state.reportItems.includes(item)) {
+        state.reportItems = state.reportItems.filter(i => i !== item);
+        setStatus(`Quitado: ${item.substring(0, 20)}...`);
+    } else {
+        state.reportItems.push(item);
+        setStatus(`Añadido: ${item.substring(0, 20)}...`);
+    }
     renderReportItems();
     refreshPreview();
     renderActivities();
-    setStatus(`Añadido: ${item.substring(0, 20)}...`);
 }
 
 async function addActivity() {
