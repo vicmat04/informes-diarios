@@ -28,11 +28,12 @@ app = Flask(__name__, template_folder='../templates', static_folder='../static')
 def get_db_client() -> Client:
     url = os.environ.get("SUPABASE_URL")
     key = os.environ.get("SUPABASE_KEY")
+    print(f"[DEBUG] Supabase Env: URL={bool(url)}, KEY={bool(key)}")
     if url and key:
         try:
             return create_client(url, key)
         except Exception as e:
-            print(f"Error connecting to Supabase: {e}")
+            print(f"[DEBUG] Error connecting to Supabase: {e}")
     return None
 
 DEFAULT_ACTIVITIES = [
@@ -98,13 +99,14 @@ def load_data() -> tuple[list[dict], list[str]]:
         try:
             response = db.table("project_data").select("data").eq("key", DB_STATE_KEY).execute()
             if response.data and len(response.data) > 0:
+                print(f"[DEBUG] DB Load success for key: {DB_STATE_KEY}")
                 data = response.data[0].get("data", {})
                 activities = data.get("activities", [])
                 workshop_topics = data.get("workshop_topics", [])
                 if activities or workshop_topics:
                     return activities, workshop_topics
         except Exception as e:
-            print(f"DB Load error: {e}")
+            print(f"[DEBUG] DB Load error: {e}")
 
     # 2. Fallback a archivo local
     if not DATA_FILE.exists():
@@ -137,12 +139,16 @@ def save_data(activities: list[dict], workshop_topics: list[str]) -> None:
     db = get_db_client()
     if db:
         try:
-            db.table("project_data").upsert({
+            print(f"[DEBUG] Attempting DB save for key: {DB_STATE_KEY}")
+            res = db.table("project_data").upsert({
                 "key": DB_STATE_KEY,
                 "data": payload
             }).execute()
+            print(f"[DEBUG] DB Save response: {res.data}")
         except Exception as e:
-            print(f"DB Save error: {e}")
+            print(f"[DEBUG] DB Save error: {e}")
+    else:
+        print("[DEBUG] DB Client not initialized - skipping cloud save")
 
     # 2. Siempre intentar guardar en archivo local (respaldo/local dev)
     try:
