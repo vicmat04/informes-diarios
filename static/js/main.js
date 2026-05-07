@@ -202,7 +202,7 @@ function renderActivities() {
         const button = document.createElement("div");
         button.className = "btn-activity";
         
-        const fullText = `${activity.title}: ${activity.detail}`;
+        const fullText = activity.detail;
         if (state.reportItems.includes(fullText)) {
             button.classList.add("selected");
         }
