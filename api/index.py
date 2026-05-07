@@ -12,13 +12,28 @@ from flask import Flask, Response, jsonify, render_template, request
 from fpdf import FPDF
 from docx import Document
 from docx.shared import Inches
+from supabase import create_client, Client
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configuración de rutas para Vercel
 APP_DIR = Path(__file__).resolve().parent
 ROOT_DIR = APP_DIR.parent
 DATA_FILE = ROOT_DIR / "actividades.json"
+DB_STATE_KEY = "informe_diario_state"
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
+
+def get_db_client() -> Client:
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_KEY")
+    if url and key:
+        try:
+            return create_client(url, key)
+        except Exception as e:
+            print(f"Error connecting to Supabase: {e}")
+    return None
 
 DEFAULT_ACTIVITIES = [
     {"title": "Revisión de correos", "detail": "Revisión de correos y mensajes de WhatsApp de dinamizadores y personal de infoplaza."},
@@ -77,6 +92,21 @@ def format_date_spanish(iso_date: str) -> str:
         return iso_date
 
 def load_data() -> tuple[list[dict], list[str]]:
+    # 1. Intentar cargar desde Supabase
+    db = get_db_client()
+    if db:
+        try:
+            response = db.table("project_data").select("data").eq("key", DB_STATE_KEY).execute()
+            if response.data and len(response.data) > 0:
+                data = response.data[0].get("data", {})
+                activities = data.get("activities", [])
+                workshop_topics = data.get("workshop_topics", [])
+                if activities or workshop_topics:
+                    return activities, workshop_topics
+        except Exception as e:
+            print(f"DB Load error: {e}")
+
+    # 2. Fallback a archivo local
     if not DATA_FILE.exists():
         return DEFAULT_ACTIVITIES.copy(), DEFAULT_WORKSHOP_TOPICS.copy()
 
@@ -102,6 +132,19 @@ def load_data() -> tuple[list[dict], list[str]]:
 
 def save_data(activities: list[dict], workshop_topics: list[str]) -> None:
     payload = {"activities": activities, "workshop_topics": workshop_topics}
+    
+    # 1. Intentar guardar en Supabase
+    db = get_db_client()
+    if db:
+        try:
+            db.table("project_data").upsert({
+                "key": DB_STATE_KEY,
+                "data": payload
+            }).execute()
+        except Exception as e:
+            print(f"DB Save error: {e}")
+
+    # 2. Siempre intentar guardar en archivo local (respaldo/local dev)
     try:
         DATA_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     except:

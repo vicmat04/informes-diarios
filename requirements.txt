@@ -3,3 +3,5 @@ gunicorn
 fpdf2
 python-docx
 lxml
+supabase==2.4.4
+python-dotenv
